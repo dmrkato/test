@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
+use App\Helper\HtmlPurifierHelper;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Casts\Attribute;
-use App\Services\HtmlPurifierService;
 
 class Comment extends Model
 {
@@ -35,7 +35,7 @@ class Comment extends Model
     {
         return Attribute::make(
             set: function ($value) {
-                return app(HtmlPurifierService::class)->purify($value);
+                return app(HtmlPurifierHelper::class)->purify($value);
             }
         );
     }

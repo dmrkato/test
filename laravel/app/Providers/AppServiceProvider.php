@@ -2,10 +2,14 @@
 
 namespace App\Providers;
 
+use App\Helper\HtmlPurifierHelper;
+use App\Interfaces\CommentAttachmentRepositoryInterface;
+use App\Interfaces\CommentRepositoryInterface;
+use App\Repositories\CommentAttachmentRepository;
+use App\Repositories\CommentRepository;
 use Illuminate\Support\ServiceProvider;
-use App\Services\HtmlPurifierService;
-use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
+use Intervention\Image\ImageManager;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -14,12 +18,20 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton(HtmlPurifierService::class, function () {
-            return new HtmlPurifierService();
+        $this->app->singleton(HtmlPurifierHelper::class, function () {
+            return new HtmlPurifierHelper();
         });
 
         $this->app->singleton(ImageManager::class, function () {
             return new ImageManager(new ImagickDriver());
+        });
+
+        $this->app->singleton(CommentRepositoryInterface::class, function () {
+            return new CommentRepository();
+        });
+
+        $this->app->singleton(CommentAttachmentRepositoryInterface::class, function () {
+            return new CommentAttachmentRepository();
         });
     }
 

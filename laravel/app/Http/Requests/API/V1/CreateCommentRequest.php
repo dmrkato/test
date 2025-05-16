@@ -29,18 +29,12 @@ class CreateCommentRequest extends FormRequest
             'home_page' => 'nullable|string|url|max:255',
             'text' => 'required|string|max:510',
             'parent_id' => 'nullable|numeric|exists:App\Models\Comment,id',
-            'attachments' => 'nullable|array',
+            'attachments' => 'nullable|array|max:5',
             'attachments.*' => [
                 'file', 'mimes:jpeg,png,jpg,gif,txt',
                 function ($attribute, $value, $fail) {
                     $mime = $value->getMimeType();
 
-//                    if (str_starts_with($mime, 'image/')) {
-//                        [$width, $height] = getimagesize($value);
-//                        if ($width > 320 || $height > 240) {
-//                            $fail('Image must be not more than 320x240 pixels');
-//                        }
-//                    } else
                     if ($mime === 'text/plain') {
                         if ($value->getSize() > 100 * 1024) {
                             $fail('Text file size must me not more than 100 KB');

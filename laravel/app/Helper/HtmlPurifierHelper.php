@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Services;
+namespace App\Helper;
 
 use HTMLPurifier;
 use HTMLPurifier_Config;
 
-class HtmlPurifierService
+class HtmlPurifierHelper
 {
-    protected HTMLPurifier $purifier;
+    protected HtmlPurifier $purifier;
     public function __construct()
     {
         $config = HTMLPurifier_Config::createDefault();

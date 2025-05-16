@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CommentAttachment extends Model
 {
@@ -13,5 +14,10 @@ class CommentAttachment extends Model
     public static function storageDir(): string
     {
         return 'comments/attachments';
+    }
+
+    public function comment(): BelongsTo
+    {
+        return $this->belongsTo(Comment::class, 'comment_id');
     }
 }

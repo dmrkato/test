@@ -2,24 +2,25 @@
 
 namespace App\DTO;
 
+use App\Models\CommentAttachment;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class CommentDTO
 {
     /**
-     * @param string $user_name
-     * @param string $email
-     * @param string $text
+     * @param string|null $user_name
+     * @param string|null $email
+     * @param string|null $text
+     * @param string|null $home_page
      * @param int|null $parent_id
-     * @param UploadedFile[]|null $attachments
      */
     public function __construct(
-        protected string $user_name,
-        protected string $email,
-        protected string $text,
+        protected ?int $id = null,
+        protected ?string $user_name = null,
+        protected ?string $email = null,
+        protected ?string $text = null,
         protected ?string $home_page = null,
         protected ?int $parent_id = null,
-        protected ?array $attachments = null,
     ) {
 
     }
@@ -27,44 +28,56 @@ class CommentDTO
     public function toArray(): array
     {
         return [
+            'id' => $this->id,
             'user_name' => $this->user_name,
             'email' => $this->email,
             'text' => $this->text,
+            'home_page' => $this->home_page,
             'parent_id' => $this->parent_id,
-            'attachments' => $this->attachments,
         ];
     }
 
-    public function getUserName(): string
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
+
+    public function setId(?int $id): self
+    {
+        $this->id = $id;
+        return $this;
+    }
+
+    public function getUserName(): ?string
     {
         return $this->user_name;
     }
 
-    public function setUserName(string $user_name): self
+    public function setUserName(?string $user_name): self
     {
         $this->user_name = $user_name;
 
         return $this;
     }
 
-    public function getEmail(): string
+    public function getEmail(): ?string
     {
         return $this->email;
     }
 
-    public function setEmail(string $email): self
+    public function setEmail(?string $email): self
     {
         $this->email = $email;
 
         return $this;
     }
 
-    public function getText(): string
+    public function getText(): ?string
     {
         return $this->text;
     }
 
-    public function setText(string $text): self
+    public function setText(?string $text): self
     {
         $this->text = $text;
 
@@ -91,25 +104,6 @@ class CommentDTO
     public function setParentId(?int $parent_id): self
     {
         $this->parent_id = $parent_id;
-
-        return $this;
-    }
-
-    /**
-     * @return UploadedFile[]|null
-     */
-    public function getAttachments(): ?array
-    {
-        return $this->attachments;
-    }
-
-    /**
-     * @param UploadedFile[]|null $attachments
-     * @return $this
-     */
-    public function setAttachments(?array $attachments): self
-    {
-        $this->attachments = $attachments;
 
         return $this;
     }

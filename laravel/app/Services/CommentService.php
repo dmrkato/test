@@ -2,92 +2,62 @@
 
 namespace App\Services;
 
+use App\DTO\CommentAttachmentDTO;
 use App\DTO\CommentDTO;
+use App\Helper\FileHelper;
+use App\Helper\HtmlPurifierHelper;
+use App\Interfaces\CommentRepositoryInterface;
 use App\Models\Comment;
 use App\Models\CommentAttachment;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
-use Intervention\Image\ImageManager;
-use Illuminate\Support\Facades\Storage;
-use Throwable;
 
 class CommentService
 {
     public function __construct(
-        protected readonly ImageManager $imageManager,
-        protected readonly HtmlPurifierService $htmlPurifierService,
+        protected readonly HtmlPurifierHelper       $htmlPurifierService,
+        protected readonly CommentAttachmentService $commentAttachmentService,
+        protected readonly CommentRepositoryInterface $commentRepository,
     ) {
     }
 
     /**
      * @param CommentDTO $commentDTO
+     * @param CommentAttachmentDTO[] $commentAttachmentDTOs
      * @return Comment
-     * @throws Throwable
+     * @throws \Throwable
      */
-    public function create(CommentDTO $commentDTO): Comment
+    public function create(CommentDTO $commentDTO, array $commentAttachmentDTOs = []): Comment
     {
-        $filePaths = [];//use to delete files if exception happen
         $comment = null;
         try {
-            DB::transaction(function () use ($commentDTO, &$comment, &$filePaths) {
-                $comment = $this->createComment($commentDTO);
-                $commentAttachments = $this->createCommentAttachment($commentDTO, $comment->id);
-                foreach ($commentAttachments as $commentAttachment) {
-                    $filePaths[] = $commentAttachment->path;
-                }
-
-                $comment->attachments()->saveMany($commentAttachments);
-            });
-        } catch (Throwable $e) {
-            Storage::disk('public')->delete($filePaths);
-            throw $e;
-        }
-
-        return $comment;
-    }
-
-    protected function createComment(CommentDTO $commentDTO): Comment
-    {
-        $comment = new Comment();
-        $comment->user_name = $commentDTO->getUserName();
-        $comment->email = $commentDTO->getEmail();
-        $comment->home_page = $commentDTO->getHomePage();
-        $comment->text = $this->htmlPurifierService->purify($commentDTO->getText());
-        $comment->parent_id = $commentDTO->getParentId();
-
-        $comment->save();
-
-        return $comment;
-    }
-
-    protected function createCommentAttachment(CommentDTO $commentDTO, int $commentId): array
-    {
-        $attachments = [];
-        $storage = Storage::disk('public');
-        foreach ($commentDTO->getAttachments() as $file) {
-            $attachment = new CommentAttachment();
-            $mimeType = $file->getMimeType();
-            $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
-            $path = implode('/', [CommentAttachment::storageDir(), $filename[0], $filename[1], $filename]);
-            if (str_starts_with($mimeType, 'image/')) {
-                // Create Intervention Image
-                $image = $this->imageManager->read($file->getPathname());
-
-                // Resize image to 320x240 (if image to big and aspect ratio)
-                $image->scale(320, 240);
-
-                $storage->put($path, (string) $image->encode());
-            } else {
-                $storage->put($path, $file->getContent());
+        DB::transaction(function () use (&$comment, $commentDTO, $commentAttachmentDTOs) {
+            $comment = $this->commentRepository->create($commentDTO->toArray());
+            $commentAttachments = [];
+            foreach ($commentAttachmentDTOs as $commentAttachmentDTO) {
+                $commentAttachments[] = new CommentAttachment($commentAttachmentDTO->toArray());
             }
 
-            $attachment->path = $path;
-            $attachment->mime_type = $mimeType;
-            $attachment->comment_id = $commentId;
-
-            $attachments[] = $attachment;
+            $this->commentRepository->attach($comment, $commentAttachments);
+        });
+        } catch (\Throwable $exception) {
+            $filePaths = [];
+            foreach ($commentAttachmentDTOs as $commentAttachmentDTO) {
+                $filePaths[] = $commentAttachmentDTO->getPath();
+            }
+            FileHelper::deleteFiles($filePaths);
+            throw $exception;
         }
 
-        return $attachments;
+        return $comment;
+    }
+
+    public function delete(Comment|int $comment, $force = false): void
+    {
+        $this->commentRepository->delete($comment, $force);
+    }
+
+    public function restore(Comment|int $comment): Comment
+    {
+        return $this->commentRepository->restore($comment);
     }
 }

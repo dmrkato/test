@@ -4,11 +4,13 @@ namespace App\Services;
 
 use App\DTO\CommentAttachmentDTO;
 use App\DTO\CommentDTO;
+use App\DTO\CommentListFilterDTO;
 use App\Helper\FileHelper;
 use App\Helper\HtmlPurifierHelper;
 use App\Interfaces\CommentRepositoryInterface;
 use App\Models\Comment;
 use App\Models\CommentAttachment;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 class CommentService
@@ -18,6 +20,27 @@ class CommentService
         protected readonly CommentAttachmentService $commentAttachmentService,
         protected readonly CommentRepositoryInterface $commentRepository,
     ) {
+    }
+
+    /**
+     * @param int $id
+     * @return Comment
+     */
+    public function getById(int $id): Comment
+    {
+        return $this->commentRepository->getById($id);
+    }
+
+
+    public function getList(CommentListFilterDTO $filters): LengthAwarePaginator
+    {
+        return $this->commentRepository->list(
+            $filters->page,
+            $filters->perPage,
+            $filters->sortBy,
+            $filters->sortDirection,
+            $filters->parentId
+        );
     }
 
     /**
@@ -51,11 +74,20 @@ class CommentService
         return $comment;
     }
 
+    /**
+     * @param Comment|int $comment
+     * @param $force
+     * @return void
+     */
     public function delete(Comment|int $comment, $force = false): void
     {
         $this->commentRepository->delete($comment, $force);
     }
 
+    /**
+     * @param Comment|int $comment
+     * @return Comment
+     */
     public function restore(Comment|int $comment): Comment
     {
         return $this->commentRepository->restore($comment);

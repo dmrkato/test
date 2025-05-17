@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use App\Models\Comment;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -13,11 +14,17 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $comments = Comment::factory(200)->create();
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        $comments->each(function ($comment) use ($comments) {
+            if (rand(0, 1)) {
+                $parent = $comments->random();
+
+                if ($parent->id !== $comment->id) {
+                    $comment->parent_id = $parent->id;
+                    $comment->save();
+                }
+            }
+        });
     }
 }

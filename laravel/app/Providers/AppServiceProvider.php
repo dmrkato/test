@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Helper\HtmlPurifierHelper;
 use App\Interfaces\CommentAttachmentRepositoryInterface;
 use App\Interfaces\CommentRepositoryInterface;
+use App\Repositories\CachedCommentRepository;
 use App\Repositories\CommentAttachmentRepository;
 use App\Repositories\CommentRepository;
 use Illuminate\Support\ServiceProvider;
@@ -27,7 +28,9 @@ class AppServiceProvider extends ServiceProvider
         });
 
         $this->app->singleton(CommentRepositoryInterface::class, function () {
-            return new CommentRepository();
+            $repository = new CommentRepository();
+
+            return new CachedCommentRepository($repository);
         });
 
         $this->app->singleton(CommentAttachmentRepositoryInterface::class, function () {

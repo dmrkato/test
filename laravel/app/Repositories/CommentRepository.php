@@ -6,10 +6,44 @@ use App\Interfaces\CommentRepositoryInterface;
 use App\Models\Comment;
 use App\Models\CommentAttachment;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 class CommentRepository implements CommentRepositoryInterface
 {
+
+    /**
+     * @param int $page
+     * @param int $perPage
+     * @param string $orderBy
+     * @param string $direction
+     * @param int|null $parentId
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     */
+    public function list(
+        int $page = 1,
+        int $perPage = 25,
+        string $orderBy = 'created_at',
+        string $direction = 'desc',
+        ?int $parentId = null
+    ): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        $query = Comment::query();
+        $query->with([
+            'attachments',
+            'childComments' => function ($query) {
+                $query->latest()->limit(5);
+            },
+        ]);
+        $query->orderBy($orderBy, $direction);
+        if ($parentId !== null) {
+            $query->where('parent_id', $parentId);
+        }
+
+        return $query->paginate($perPage, ['*'], 'page', $page)->appends(request()->query());
+    }
+
+
     /**
      * @param int $id
      * @return Comment
@@ -17,7 +51,12 @@ class CommentRepository implements CommentRepositoryInterface
      */
     public function getById(int $id): Comment
     {
-        return Comment::withTrashed()->findOrFail($id);
+        return Comment::withTrashed()->with([
+            'attachments',
+            'childComments' => function ($query) {
+                $query->latest()->limit(5);
+            },
+        ])->findOrFail($id);
     }
 
     /**
@@ -38,6 +77,17 @@ class CommentRepository implements CommentRepositoryInterface
         return $comment;
     }
 
+    public function update(Comment|int $comment, array $data): Comment
+    {
+        $comment = $this->updateCommentArg($comment);
+
+        $comment->fill($data);
+
+        $comment->save();
+
+        return $comment;
+    }
+
     /**
      * @param Comment|int $comment
      * @return Comment
@@ -45,7 +95,7 @@ class CommentRepository implements CommentRepositoryInterface
      */
     public function restore(Comment|int$comment): Comment
     {
-        $this->checkCommentArg($comment);
+        $this->updateCommentArg($comment);
 
         $comment->restore();
 
@@ -60,15 +110,13 @@ class CommentRepository implements CommentRepositoryInterface
      */
     public function delete(Comment|int $comment, bool $force = false): void
     {
-        $this->checkCommentArg($comment);
+        $comment = $this->updateCommentArg($comment);
 
-        DB::transaction(function () use ($comment, $force) {
-            if ($force) {
-                $comment->forceDelete();
-            } else {
-                $comment->delete();
-            }
-        });
+        if ($force) {
+            $comment->forceDelete();
+        } else {
+            $comment->delete();
+        }
 
     }
 
@@ -80,7 +128,7 @@ class CommentRepository implements CommentRepositoryInterface
      */
     public function attach(Comment|int $comment, array $commentAttachments): void
     {
-        $this->checkCommentArg($comment);
+        $comment = $this->updateCommentArg($comment);
 
         foreach ($commentAttachments as $key => $commentAttachment) {
             if (!($commentAttachment instanceof CommentAttachment)) {
@@ -89,17 +137,20 @@ class CommentRepository implements CommentRepositoryInterface
         }
 
         $comment->attachments()->saveMany($commentAttachments);
+        $comment->load('attachments');
     }
 
     /**
      * @param Comment|int $comment
-     * @return void
+     * @return Comment
      * @throws ModelNotFoundException<Comment>
      */
-    private function checkCommentArg(Comment|int &$comment): void
+    private function updateCommentArg(Comment|int &$comment): Comment
     {
         if (is_int($comment)) {
             $comment = $this->getById($comment);
         }
+
+        return $comment;
     }
 }

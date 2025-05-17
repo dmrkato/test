@@ -8,6 +8,5 @@ services:
       context: ./.warden/php
       target: php-fpm
 
-    command: sudo /usr/bin/supervisord -n
     volumes:
       - "./.warden/php/supervisor:/etc/supervisord.d/"

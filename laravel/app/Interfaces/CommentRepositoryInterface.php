@@ -2,12 +2,20 @@
 
 namespace App\Interfaces;
 
-use App\DTO\CommentDTO;
 use App\Models\Comment;
 use App\Models\CommentAttachment;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 interface CommentRepositoryInterface
 {
+
+    public function list(
+        int $page,
+        int $perPage,
+        string $orderBy,
+        string $direction,
+        ?int $parentId = null,
+    ): LengthAwarePaginator;
     /**
      * @param int $id
      * @return Comment
@@ -19,6 +27,15 @@ interface CommentRepositoryInterface
      * @return Comment
      */
     public function create(array $data): Comment;
+
+    /**
+     * @param Comment|int $comment
+     * @param array $data
+     * @return Comment
+     */
+    public function update(Comment|int $comment, array $data): Comment;
+
+    public function restore(Comment|int $comment): Comment;
 
     /**
      * @param int|Comment $comment

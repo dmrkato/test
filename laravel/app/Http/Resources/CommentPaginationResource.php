@@ -17,16 +17,4 @@ class CommentPaginationResource extends ResourceCollection
             'data' => CommentResource::collection($this->collection),
         ];
     }
-
-//    public function with($request)
-//    {
-//        return [
-//            'meta' => [
-//                'current_page' => $this->currentPage(),
-//                'last_page' => $this->lastPage(),
-//                'per_page' => $this->perPage(),
-//                'total' => $this->total(),
-//            ],
-//        ];
-//    }
 }

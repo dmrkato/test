@@ -18,7 +18,7 @@ class DatabaseSeeder extends Seeder
 
         $comments->each(function ($comment) use ($comments) {
             if (rand(0, 1)) {
-                $parent = $comments->random();
+                $parent = $comments->filter(function ($comment) { return $comment->parent_id === null; })->random();
 
                 if ($parent->id !== $comment->id) {
                     $comment->parent_id = $parent->id;
@@ -26,5 +26,7 @@ class DatabaseSeeder extends Seeder
                 }
             }
         });
+
+        $this->call(FixCommentChildCountCollum::class);
     }
 }

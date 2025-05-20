@@ -18,7 +18,7 @@ class DatabaseSeeder extends Seeder
 
         $comments->each(function ($comment) use ($comments) {
             if (rand(0, 1)) {
-                $parent = $comments->filter(function ($comment) { return $comment->parent_id === null; })->random();
+                $parent = $comments->random();
 
                 if ($parent->id !== $comment->id) {
                     $comment->parent_id = $parent->id;

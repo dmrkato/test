@@ -14,8 +14,12 @@ class Comment extends Model
 {
     use SoftDeletes,HasFactory;
     protected $fillable = [
-        'user_name', 'email', 'text', 'home_page', 'parent_id'
+        'user_name', 'email', 'text', 'home_page', 'parent_id', 'child_comments_count'
     ];
+
+    public static function childCommentLimit(): int {
+        return 5;
+    }
 
     public function parentComment(): BelongsTo
     {

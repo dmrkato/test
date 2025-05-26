@@ -26,5 +26,7 @@ class DatabaseSeeder extends Seeder
                 }
             }
         });
+
+        $this->call(FixCommentChildCountCollum::class);
     }
 }

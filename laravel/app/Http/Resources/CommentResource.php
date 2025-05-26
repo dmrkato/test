@@ -23,6 +23,8 @@ class CommentResource extends JsonResource
             'text' => $this->text,
             'attachments' => $this->attachments->toArray(),
             'child_comments' => [],
+            'child_comments_count' => $this->child_comments_count,
+            'parent_id' => $this->parent_id,
             'created_at' => $this->created_at,
         ];
 

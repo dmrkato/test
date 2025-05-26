@@ -21,6 +21,7 @@ class CommentDTO
         protected ?string $text = null,
         protected ?string $home_page = null,
         protected ?int $parent_id = null,
+        protected ?int $child_comments_count = 0,
     ) {
 
     }
@@ -105,6 +106,17 @@ class CommentDTO
     {
         $this->parent_id = $parent_id;
 
+        return $this;
+    }
+
+    public function getChildCommentsCount(): ?int
+    {
+        return $this->child_comments_count;
+    }
+
+    public function setChildCommentsCount(?int $child_comments_count): self
+    {
+        $this->child_comments_count = $child_comments_count;
         return $this;
     }
 }

@@ -36,9 +36,7 @@ class CommentRepository implements CommentRepositoryInterface
             },
         ]);
         $query->orderBy($orderBy, $direction);
-        if ($parentId !== null) {
-            $query->where('parent_id', $parentId);
-        }
+        $query->where('parent_id', $parentId);
 
         return $query->paginate($perPage, ['*'], 'page', $page)->appends(request()->query());
     }
@@ -54,7 +52,7 @@ class CommentRepository implements CommentRepositoryInterface
         return Comment::withTrashed()->with([
             'attachments',
             'childComments' => function ($query) {
-                $query->latest()->limit(5);
+                $query->latest()->limit(Comment::childCommentLimit());
             },
         ])->findOrFail($id);
     }

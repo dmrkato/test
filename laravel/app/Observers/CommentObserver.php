@@ -2,16 +2,25 @@
 
 namespace App\Observers;
 
+use App\Interfaces\CommentRepositoryInterface;
 use App\Models\Comment;
 
 class CommentObserver
 {
+    public function __construct(
+        private readonly CommentRepositoryInterface $commentRepository
+    ) {
+    }
+
     /**
      * Handle the Comment "created" event.
      */
     public function created(Comment $comment): void
     {
-        //
+        if ($comment->parent_id) {
+            $parentComment = $this->commentRepository->getById($comment->parent_id);
+            $parentComment->increment('child_comments_count');
+        }
     }
 
     /**
